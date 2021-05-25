@@ -22,11 +22,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
         
-        // Set the scene to the view
-        sceneView.scene = scene
+        sceneView.autoenablesDefaultLighting = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -34,7 +32,16 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
-
+        
+        if let imageToTrack = ARReferenceImage.referenceImages(inGroupNamed: "Pokemon Cards", bundle: Bundle.main) {
+            
+            configuration.detectionImages = imageToTrack
+            configuration.maximumNumberOfTrackedImages = 2
+            //configuration.frameSemantics.insert(.personSegmentationWithDepth)
+            
+            
+            print("Image Success")
+        }
         // Run the view's session
         sceneView.session.run(configuration)
     }
@@ -47,28 +54,61 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
 
     // MARK: - ARSCNViewDelegate
+
     
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
     func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
+        //anchor is the thing that we detected, in this case its the image
+        //node is the 3D object we detected
+        
         let node = SCNNode()
-     
+        
+        if let imageAnchor = anchor as? ARImageAnchor {
+            
+            print(imageAnchor.referenceImage.name!)
+            
+            let plane = SCNPlane(width: imageAnchor.referenceImage.physicalSize.width, height: imageAnchor.referenceImage.physicalSize.height)
+            
+            plane.firstMaterial?.diffuse.contents = UIColor(white: 1.0, alpha: 0.5) //chanege plane color to 透明
+            
+            let planeNode = SCNNode()
+            
+            planeNode.geometry = plane
+            
+            planeNode.eulerAngles.x = -Float.pi / 2 //把plane 轉成平行
+            
+            node.addChildNode(planeNode)
+            
+            if let referenceImageName = imageAnchor.referenceImage.name {
+                if referenceImageName == "i01_eevee" {
+                    if let pokeScene = SCNScene(named: "art.scnassets/eevee.scn") {
+                        
+                        if let pokeNode = pokeScene.rootNode.childNodes.first {
+                            
+                            pokeNode.eulerAngles.x = .pi / 2
+                            planeNode.addChildNode(pokeNode)
+                            
+                        }
+                    }
+                }
+                
+                if referenceImageName == "i01_oddish" {
+                    if let pokeScene = SCNScene(named: "art.scnassets/oddish.scn") {
+                        
+                        if let pokeNode = pokeScene.rootNode.childNodes.first {
+                            
+                            pokeNode.eulerAngles.x = .pi / 2
+                            planeNode.addChildNode(pokeNode)
+                        }
+                    }
+                }
+            }
+            
+            
+           
+        }
+        
+        
         return node
     }
-*/
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
-    }
+   
 }
